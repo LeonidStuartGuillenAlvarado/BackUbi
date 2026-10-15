@@ -1,0 +1,41 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+  <form class="w-full max-w-sm bg-white rounded-lg shadow p-6 space-y-4" (ngSubmit)="iniciarSesion()">
+    <h1 class="text-xl font-semibold text-gray-800">BACKUBI — Dashboard</h1>
+
+    <div>
+      <label class="block text-sm text-gray-600 mb-1" for="email">Email</label>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        required
+        [(ngModel)]="email"
+        class="w-full border rounded px-3 py-2"
+      />
+    </div>
+
+    <div>
+      <label class="block text-sm text-gray-600 mb-1" for="password">Contraseña</label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        required
+        [(ngModel)]="password"
+        class="w-full border rounded px-3 py-2"
+      />
+    </div>
+
+    @if (error()) {
+      <p class="text-red-600 text-sm">{{ error() }}</p>
+    }
+
+    <button
+      type="submit"
+      [disabled]="cargando()"
+      class="w-full bg-gray-900 text-white rounded px-3 py-2 disabled:opacity-50"
+    >
+      {{ cargando() ? 'Ingresando…' : 'Ingresar' }}
+    </button>
+  </form>
+</div>

@@ -1,0 +1,13 @@
+<div class="relative w-screen h-screen">
+  <div #mapContainer class="absolute inset-0"></div>
+
+  @if (estado() === 'cargando' || estado() === 'invalido') {
+    <div class="absolute inset-0 flex items-center justify-center bg-white/90">
+      @if (estado() === 'cargando') {
+        <p class="text-gray-500">Cargando mapa…</p>
+      } @else {
+        <p class="text-gray-500">Este enlace ya no está disponible.</p>
+      }
+    </div>
+  }
+</div>

